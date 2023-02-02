@@ -1,7 +1,8 @@
 
 using Infrastructure.Data;
 using Infrastructure.MapperProfiles;
-
+using Infrastructure.SeedData;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<DataContext>(conf => conf.UseNpgsql(connection));
 builder.Services.AddControllers();
+builder.Services.AddScoped<BookService>();
 //configure automapper
 builder.Services.AddAutoMapper(typeof(InfrastructureProfile));
 
@@ -20,6 +22,9 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+
+//seed 
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -27,11 +32,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-var scope = app.Services.CreateScope();
-var services = scope.ServiceProvider;
-var context = services.GetRequiredService<DataContext>();
-context.Database.Migrate();
-
+try
+{
+    var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<DataContext>();
+    context.Database.Migrate();
+    SeedData.Seed(context);
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex.Message);
+}
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
