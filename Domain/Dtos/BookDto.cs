@@ -14,6 +14,6 @@ public class BookDto
     public string Publisher { get; set; }
     public int SubjectId { get; set; }
     public string Subject { get; set; }
-    public string AuthorFullName { get; set; }
+    public List<string> Authors { get; set; }
     
 }

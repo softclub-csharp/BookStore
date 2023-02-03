@@ -23,16 +23,13 @@ public class BookService
     {
         var list = (
             from b in _context.Books
-            join ba in _context.AuthorBooks on b.Id equals ba.BookId 
-            join a in _context.Authors on ba.AuthorId equals a.Id
-            join p in _context.Publishers on b.PublisherId equals p.Id
             select new BookDto()
             {
                 Id = b.Id,
                 Isbn = b.Isbn,
                 Title = b.Title,
-                Publisher = p.Name,
-                AuthorFullName = string.Concat(a.Firstname, " ", a.Lastname),
+                Publisher = b.Publisher.Name,
+                Authors = b.BookAuthors.Select(x=>string.Concat(x.Author.Firstname," ",x.Author.Lastname)).ToList()
             }).ToList();
         return new Response<List<BookDto>>(list);
     }
@@ -83,15 +80,59 @@ public class BookService
                 Title = g.Key.Title,
                 Reviews = (from r in g 
                         join u in _context.Users on r.UserId equals u.Id
-                        select new ReviewDto()
-                        {
-                            Comment = r.Comment,
-                            Id = r.Id,
-                            Rating = r.Rating,
-                            UserFullName = string.Concat(u.FirstName,' ',u.LastName)
-                        }).ToList()
+                        select new ReviewDto(r.Id,r.Title,r.Comment,r.Rating,r.UserId,string.Concat(u.FirstName,' ',u.LastName)))
+                    .ToList()
                     
             }).ToListAsync();
         return new Response<List<BookReviewDto>>(list);
     }
+    
+    // analise
+    public async Task<Response<List<SubjectDto>>> GetSubjects()
+    {
+        // var list = await (from s in _context.Subjects
+        //     join b in _context.Books on s.Id equals b.SubjectId
+        //     group b by new { s.Id, s.Name, s.Description }
+        //     into gr
+        //     select new SubjectDto(gr.Key.Id, gr.Key.Name, gr.Key.Description)
+        //     {
+        //         
+        //         Books = _mapper.Map<List<BookDto>>(gr.ToList())
+        //     }).ToListAsync();
+
+        var listv3 = _context.Subjects.ToListAsync();
+
+        var Books = await _context.Subjects.SelectMany(x => x.Books).ToListAsync();
+        
+        var listV2 = await _context.Subjects.Select(x => new SubjectDto(x.Id, x.Name, x.Description)
+        {
+          Books = _mapper.Map<List<BookDto>>(x.Books)
+        }).ToListAsync();
+
+        return new Response<List<SubjectDto>>(listV2);
+    }
+    
+    // 
+    public async Task<Response<List<BookDetailDto>>> GetBookDetails()
+    {
+        
+        var listv1 = await (from b in _context.Books
+            select new BookDetailDto()
+            {
+                Id = b.Id,
+                Title = b.Title,
+                ReviewCount = (from r in _context.Reviews where r.BookId == b.Id select r).Count(),
+                AuthorCount = (from ab in _context.AuthorBooks where ab.BookId == b.Id select ab).Count()
+            }).ToListAsync();
+
+        var listV2 = await _context.Books.Select(x => new BookDetailDto()
+        {
+            Id = x.Id,
+            Title = x.Title,
+             ReviewCount = x.Reviews.Count,
+             AuthorCount = x.BookAuthors.Count
+        }).ToListAsync();
+        return new Response<List<BookDetailDto>>(listv1);
+    }
+    
 }

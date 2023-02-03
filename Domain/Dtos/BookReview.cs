@@ -15,4 +15,14 @@ public class ReviewDto
     public int Rating { get; set; }
     public int UserId { get; set; }
     public string UserFullName { get; set; }
+
+    public ReviewDto(int id, string title, string comment, int rating, int userId, string userFullName)
+    {
+        Id = id;
+        Title = title;
+        Comment = comment;
+        Rating = rating;
+        UserId = userId;
+        UserFullName = userFullName;
+    }
 }

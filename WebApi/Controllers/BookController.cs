@@ -26,4 +26,9 @@ public class BookController:ControllerBase
 
     [HttpGet("reviews")]
     public async Task<Response<List<BookReviewDto>>> GetReviews()=>await _bookService.GetReviews();
+    [HttpGet("subjects")]
+    public async Task<Response<List<SubjectDto>>> GetSubjects()=>await _bookService.GetSubjects();
+    
+    [HttpGet("details")]
+    public async Task<Response<List<BookDetailDto>>> GetBookDetails()=>await _bookService.GetBookDetails();
 }
